@@ -1,0 +1,56 @@
+Repository lives at:
+
+~/.seeds 
+/usr/local/seeds
+
+Use .seeds/config.json to change settings
+
+--
+
+The repository has a config file then one or more git repositories and then
+checkouts for specific versions
+
+~/.seeds/
+  config.json   // JSON config file
+  packages.json // all known packages by version in repo 
+  packages/     // checked out package
+    sproutcore-1.0.1046/  versioned package   
+
+--
+ 
+You can actually have multiple seed installs on your machine.  When you start
+an app, the seed.HOME [discovered by walking up the chain looking for a ]
+
+--
+
+== Canonical Module ID
+
+A canonical module ID is used to uniquely identify a package to the system.
+
+::repo:packageId:vers:moduleId
+
+example:
+
+::root:1.1.0:sproutcore/runtime:core
+
+- The first :: indicates that this is a canonical id.
+- The next segment indicates the source repository.  root refers to packages loaded directly from disk and not out of a repository.  Alternatively this may be a repository name or path
+
+::user:1.1.0:sproutcore/runtime:core
+
+canonical moduleIds are used to maintain module caches but otherwise aren't 
+usually required.
+
+== How Packages are Resolved
+
+When you require() a module from package other than the current one, Seed uses
+an algorithm to try to locate the package:
+
+- first we look for a packageId in the local packages directory.  If the packageId contains slashes, we look inside nested packages. i.e. for sproutcore/runtime we will look inside packages/sproutcore/packages/runtime
+
+- if not found there, we look in the packages directory of the owner package.  we perform this search recursively until we reach a top-level package.
+
+- if a package is found in a local dir this way, we check to make sure the version is compatible with whatever is required by the current package, if anything.  if it is not, we throw an error
+
+- if no package is found locally, we consult any built-in repositories.  The repository is simply required to try to locate a version of the package that matches the requirement.  
+

@@ -1,0 +1,5 @@
+{
+  "name": "seed",
+  "version": "0.1.1000",
+  "description": "Core package for handling seeds.  The seed bootstrap used by node.js will actually look for the lib/index.js file here and load it"
+}

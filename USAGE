@@ -4,16 +4,27 @@ h2. Using Seed in your node.js project
 In your main.js file, require seed then require any other packages you might 
 need.
 
----> index.js
+---> main.js
+#!/usr/bin/which seed
 
-var seed = require('seed'),
-    Hello = seed.require('hello'); // loads the hello package
-
+Hello = seed.require('hello'); // loads the hello package
 Hello.world();
 
 ---
 
 Then from the command line:
 
-node index.js
+seed init
 
+== API
+
+seed.require('package:module', 'version');
+
+requires a given package/module matching the specified version info.  You can
+also use the import directive:
+
+"import package:module >= 1.0";
+
+This will load the named package/module and automatically define it in the 
+current scope.  Import directives are processed at the time the module is 
+loaded.

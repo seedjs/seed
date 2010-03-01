@@ -1,0 +1,5 @@
+{
+  "lib": ["lib"],
+  "tests": ["tests"],
+  "packages": ["packages", "apps", "frameworks", "pages", "themes"]
+}
