@@ -1,0 +1,7 @@
+{
+  "name": "foo",
+  "version": "1.2.1",
+  "seed": {
+    "from": "foo-1.2.1"
+  }
+}

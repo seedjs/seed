@@ -1,0 +1,11 @@
+{
+  "name": "installing",
+  "version": "1.0.0",
+  
+  "description": "used to test installing a package into a repository",
+  
+  "scripts": {
+    "setup": "scripts/setup.js",
+    "teardown":  "scripts/teardown.js"
+  }
+}

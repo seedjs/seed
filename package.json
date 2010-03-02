@@ -1,0 +1,18 @@
+{
+  "name": "seed",
+  "version": "0.1.1000",
+  "description": "Core package for handling seeds.  The seed bootstrap used by node.js will actually look for the lib/index.js file here and load it",
+  
+  // defines the locations for seed repositories on the local machine
+  // override with a local.json if you need to do something different
+  "seed": {
+    "repositories":  ["~/.seeds", "/usr/local/seeds"],
+    "commands": {
+      "install": "seed:commands",
+      "remove":  "seed:commands",
+      "list":    "seed:commands",
+      "help":    "seed:commands",
+      "update":  "seed:commands"
+    }
+  }
+}

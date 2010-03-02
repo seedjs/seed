@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+var seed = require('seed');
+var commands = seed.require('seed:commands');
+
+// first two args are 'node' and path to this binary
+var args = Array.prototype.slice.call(process.argv, 2);
+commands.invokeSync(args.shift(), args);
