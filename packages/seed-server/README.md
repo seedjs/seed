@@ -79,13 +79,13 @@ make a package private by deleting the anonymous access.
 You can search for package information by getting the /seed/packages URL.
 You can specify the following query options:
 
-*	*`name=NAME`:* the name of the package info to retrieve
-*   *`version=VERSION`:* searches for the exact version in the repo
-*   *`compatible=VERSION`:* returns any comptaible versions
-*	*`dependencies=true|false`:* return also package info for dependencies 
+*	**`name=NAME`:** the name of the package info to retrieve
+*   **`version=VERSION`:** searches for the exact version in the repo
+*   **`compatible=VERSION`:** returns any comptaible versions
+*	**`dependencies=true|false`:** return also package info for dependencies 
 	(this defaults to false if not specified)
-*	*`q=KEYWORDS`:* returns any packages matching the comma or space separated 
-	keywords
+*	**`q=KEYWORDS`:** returns any packages matching the comma or space 
+	separated keywords
 	
 Example URL:
 
@@ -166,7 +166,7 @@ Generally once a package is published it should not be removed.  It is
 possible to withdraw a package by sending a DELETE to the package URL.
 However this should be exercised with caution.
 
-	DELETE /seed/packages/jake/0.1.2
+	DELETE /seed/packages/jake/0.1.2?token=TOKEN
 
 
 ## Git Post Commit Hooks
@@ -179,8 +179,49 @@ will be added to the repository automatically.
 
 A post commit hook should look like this:
 
+	POST /seed/ping?from=GIT_URL&paths=path1,path2&token=TOKEN
+	
+The query parameters are very important for this to work.  Note that the body 
+of the post is ignored.  Your queries should be:
+
+*	**`from`:** URL to use to clone the git repository
+*	**`paths`:** optional one or more paths within the repository where 
+	packages can be found
+*	**`token`:** API token.  the token must match a user with permission to
+	update any discovered packages or they will be ignored
 
 ## Event Feeds
 
 Seed server maintains event feeds for each package and for the services as 
-a whole.  You can use these event feeds, for example, to build a nice UI.
+a whole.  You can use these event feeds, for example, to build a UI around 
+the service.
+
+To get a feed of all the events that have occurred on a particular package
+use the form:
+
+	GET /seed/packages/jake/events
+
+Or to get a feed of all the events that have occured on packages a particular
+user has access to use:
+
+	GET /seed/users/cjolley/events
+	
+To get the public feed (essentialy the events feed for the anonymous user),
+use:
+
+	GET /seed/users/anonymous/events
+	
+All event feeds take an optional `page` param which can be used to select a
+page of events.  Event feeds are JSON with the following format:
+
+	{
+		"events": [
+			{
+				"kind": "kind of event",
+				"description": "human readable description",
+				"created": "time event occurred"
+			}
+		]
+	}
+
+Other metadata may be included in event feeds as well.
