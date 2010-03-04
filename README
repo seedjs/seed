@@ -1,7 +1,0 @@
-Seed is a simple package manager for JavaScript
-
-- Based on node.js on git, making it easy to exchange changes and track history
-
-- Maintain private package repositories for your own company or group and automatically sync them with upstream repositories as needed
-
-- Implemented around common.js spec
