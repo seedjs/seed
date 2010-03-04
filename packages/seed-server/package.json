@@ -1,0 +1,9 @@
+{
+  "name": "seed-server",
+  "description": "Standard server for hosting seeds.  You can start a seed server by using the command 'seed server' or access this package to integrate the service into your own web server",
+  "version": "0.1.1000",
+  
+  "dependencies": {
+    "seed": "0.1"
+  }
+}
