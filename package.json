@@ -8,11 +8,12 @@
   "seed": {
     "repositories":  ["~/.seeds", "/usr/local/seeds"],
     "commands": {
-      "install": "seed:commands",
-      "remove":  "seed:commands",
-      "list":    "seed:commands",
-      "help":    "seed:commands",
-      "update":  "seed:commands"
+      "install": "seed:commands/install",
+      "remove":  "seed:commands/remove",
+      "list":    "seed:commands/list",
+      "help":    "seed:commands/help",
+      "update":  "seed:commands/update",
+      "freeze":  "seed:commands/freeze"
     }
   }
 }
