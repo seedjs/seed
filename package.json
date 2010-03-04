@@ -13,7 +13,8 @@
       "list":    "seed:commands/list",
       "help":    "seed:commands/help",
       "update":  "seed:commands/update",
-      "freeze":  "seed:commands/freeze"
+      "freeze":  "seed:commands/freeze",
+      "server":  "seed-server:command"
     }
   }
 }

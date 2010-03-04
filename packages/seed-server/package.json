@@ -4,6 +4,7 @@
   "version": "0.1.1000",
   
   "dependencies": {
-    "seed": "0.1"
+    "seed": "0.1",
+    "node-router": "0.1"
   }
 }
