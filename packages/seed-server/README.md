@@ -166,7 +166,7 @@ Generally once a package is published it should not be removed.  It is
 possible to withdraw a package by sending a DELETE to the package URL.
 However this should be exercised with caution.
 
-	DELETE /seed/packages/jake/0.1.2?token=TOKEN
+	DELETE /seed/packages/jake?version=0.1.2&token=TOKEN
 
 
 ## Git Post Commit Hooks

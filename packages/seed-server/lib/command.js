@@ -5,7 +5,7 @@
 // ==========================================================================
 
 
-var Co = require('seed:co');
+var server = require('server');
 
 exports.usage = 'server';
 exports.summary = "Starts a new seed server";
@@ -37,11 +37,5 @@ exports.invoke = function(cmd, args, opts, done) {
   opts.on('root', function(k,v) { root =v; });
   args = opts.parse(args);
   
-  root = Co.path.normalize(root);
-  
-  Co.sys.puts("Seed Server v" + module.pkg.info('version'));
-  Co.sys.puts("Listening on " + host + ":" + port);
-  Co.sys.puts("Rooted at " + root);
-
-  return done();
+  server.start({ port: port, host: host, root: root }, done);
 };
