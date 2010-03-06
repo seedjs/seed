@@ -55,7 +55,16 @@ exports.start = function(opts, done) {
   Helper method used by resources to return an error
 */
 exports.error = function(res, err) {
-  res.simpleJson(503, { reason: err.toString() });
+  if ('number' === typeof err) res.simpleText(err, '');
+  else res.simpleText(503, err.toString());
+};
+
+/**
+  Helper method used to return a forbidden url
+*/
+exports.forbidden = function(res, reason) {
+  if (!reason) reason = '';
+  res.simpleText(403, reason);
 };
 
 

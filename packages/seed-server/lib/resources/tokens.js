@@ -10,6 +10,10 @@ var Co     = require('seed:co'),
     server = require('server'),
     users  = require('resources/users'),
     tokens = exports;
+    
+var Token = require('models/token');
+    
+var User = require('models/user');
 
 // ..........................................................
 // SERVER ACTIONS
@@ -17,34 +21,30 @@ var Co     = require('seed:co'),
 
 // you can only list all tokens if the token you pass is for an admin user
 tokens.index = function(req, res) {
-  tokens.validate(req, function(err, user) {
-    if (!user) return res.simpleText(403, 'Valid Token Required');
-    
-    // get all tokens I have access to.  basically tokens assigned to or 
-    // created by me or all tokens if I am admin
-    var path = Co.path.join(server.root, 'tokens');
-    Co.fs.readdir_p(path, function(err, tokenIds) {
-      if (err) return server.error(res, err);
-      if (!tokenIds) tokenIds = [];
+  tokens.validate(req, function(err, currentUser) {
+    if (currentUser.canSeeAllTokens()) {
+      Token.findAll(function(err, tokens) {
+        if (err) return server.error(res, err);
+        tokens = tokens.map(function(token) {
+          return token.indexJson(currentUser);
+        });
+        return res.simpleJson(200, tokens);
+      });
       
-      // map to token info and then filter out
-      Co.reduce(tokenIds, [], function(ret, tokenId, done) {
-        tokenId = tokenId.slice(0,-5); // cut off .json
-        tokens.find(tokenId, function(err, token) {
-          if (err) return done(err);
-          if (!token) return done(null, ret); // skip
-          if ((user.group === 'admin') || (token.user === user.id) || (token.creator === user.id)) {
-            ret.push(token);
-          }
-          return done(null, ret);
+    } else if (currentUser.canSeeTokensForUser(currentUser)) {
+      Token.findAll(function(err, tokens) {
+        if (err) return server.error(res, err);
+        tokens = tokens.filter(function(token) {
+          return token.userId() === currentUser.id;
         });
 
-      // send results
-      })(function(err, ret) {
-        if (err) return server.error(res, err);
-        res.simpleJson(200, ret);
+        tokens = tokens.map(function(token) {
+          return token.indexJson(currentUser);
+        });
+        return res.simpleJson(200, { "records": tokens });
       });
-    });
+      
+    } else return server.forbidden(res);
   });
 };
 
@@ -109,19 +109,25 @@ tokens.create = function(req, res, body) {
 // if you know the id of a token, we will return the info for the token since
 // knowing the token implicitly gives you permission to see it
 tokens.show = function(req, res, id) {
-  tokens.find(id, function(err, info) {
+  Token.find(id, function(err, token) {
     if (err) return server.error(res, err);
-    if (!info) return res.notFound(id + ' not found');
-    res.simpleJson(200, info);
+    if (!token) return res.notFound();
+    res.simpleJson(200, token.showJson());
   });
 };
 
 // likewise, if you know a token id you can delete it since knowing gives you
 // power to delete
-tokens.destroy = function(req, res, tokenId) {
-  var path = Co.path.join(server.root, 'tokens', tokenId+'.json');
-  tokens.remove(tokenId, false, function(err) {
-    res.simpleText(200, 'Deleted');
+tokens.destroy = function(req, res, id) {
+  Token.find(id, function(err, token) {
+    if (err) return server.error(res, err);
+    (function(done) {
+      if (token) token.destroy(done);
+      else done();
+    })(function(err) {
+      if (err) return server.error(res, err);
+      return res.simpleText(200, 'OK');
+    });
   });
 };
 
@@ -193,7 +199,7 @@ tokens.user = function(tokenId, done) {
   tokenId = tokenId.toLowerCase();
   tokens.find(tokenId, function(err, info) {
     if (err || !info) return done(err);
-    users.find(info.user, done);
+    User.find(info.user, done);
   });
 };
 
@@ -208,10 +214,10 @@ tokens.validate = function(req, done) {
     tokenId = tokenId.toLowerCase();
     tokens.user(tokenId, function(err, info) {
       if (err) return done(err);
-      if (!info) return users.find('anonymous', done);
+      if (!info) return User.find('anonymous', done);
       else return done(null, info);
     });
     
-  } else return users.find('anonymous', done);
+  } else return User.find('anonymous', done);
 };
 
