@@ -4,8 +4,9 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var Co     = require('seed:co');
-var server = require('server');
+var Co     = require('seed:co'),
+    server = require('server'),
+    cache  = require('cache');
 
 /**
   Describes a single JSON model on disk
@@ -37,6 +38,31 @@ var Record = Co.extend({
   idForPath: function(path) {
     return Co.path.filename(path).slice(0,-5);
   },
+  
+  cacheKeyForId: function(id, sub) {
+    var keyCache, kindCache, idCache, ret,
+        kind = this.kind;
+
+    keyCache = Record._keyCache;
+    if (!keyCache) keyCache = Record._keyCache = {};
+
+    kindCache = keyCache[kind];
+    if (!kindCache) kindCache = keyCache[kind] = {};
+
+    idCache = kindCache[id];
+    if (!idCache) idCache = kindCache[id] = {};
+
+    ret = idCache[sub];
+    if (!ret) ret = idCache = ('::record:' + kind + ':' + id + ':' + sub);
+    return ret;
+  },
+  
+  revision: function(done) {
+    Co.fs.stats(this.pathForId(this.id), function(err, stats) {
+      if (err) return done(err);
+      return done(null, stats ? stats.mtime : 1);
+    });
+  },
 
   // called when a new record is created.  populates with data.  return 
   // and error to done if data is invalid
@@ -65,6 +91,9 @@ var Record = Co.extend({
     this.open(function(err) {
       if (err) return done(err);
       server.writeJson(rec.path, rec.data, function(err) {
+        cache.remove(rec.cacheKeyForId(rec.id, 'revision'));
+        cache.remove(rec.cacheKeyForId('$ALL$', 'revision'));
+        
         if (err) return done(err);
         else return done(null, rec);
       });
@@ -98,6 +127,42 @@ var Record = Co.extend({
   
   
 }); 
+
+/**
+  Finds the latest revision for the named record id
+*/
+Record.revision = function(id, done) {
+  var key = this.prototype.cacheKeyForId(id, 'revision');
+  cache.read(key, function(done) {
+    Record.find(id, function(err, rec) {
+      if (err) return done(err);
+      if (!rec) return done(null, 1);
+      return rec.revision(done);
+    });
+  }, done);
+};
+
+/**
+  Finds the latest revision for all records of this type
+*/
+Record.latestRevision = function(done) {
+  var key = this.prototype.cacheKeyForId('$ALL$', 'revision');
+  cache.read(key, function(done) {
+    Record.findAll(function(err, recs) {
+      if (err) return done(err);
+      var max = 0;
+      Co.each(recs, function(rec, done) {
+        rec.revision(function(err, rev) {
+          if (err) return done(err);
+          if (rev>max) max = rev;
+        });
+      })(function(err) {
+        if (err) return done(err);
+        return done(null, max);
+      });
+    });
+  }, done);
+};
 
 /**
   Finds an individual record.  Copy to subclasses
@@ -147,13 +212,11 @@ Record.replace = function(id, data, done) {
   });
 };
 
+var KEYS = 'find findAll create replace extend latestRevision revision'.split(' ');
+
 Record.extend = function(ext) {
   var Rec = Co.extend(this, ext);
-  Rec.find = this.find;
-  Rec.findAll = this.findAll;
-  Rec.create = this.create;
-  Rec.replace = this.replace;
-  Rec.extend  = this.extend;
+  KEYS.forEach(function(key) { Rec[key] = this[key]; }, this);
   return Rec;
 };
 
