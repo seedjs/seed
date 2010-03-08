@@ -58,15 +58,12 @@ var User = Record.extend({
     this.data = r;
     this.isOpen = true;
 
-    Co.sys.debug('prepared user: ' + this.id);
-    
     // we need a new token for this user
     var tokenData = { user: this.id, creator: this.id, expires: 0 };
     
     Token.create(server.uuid(), tokenData, function(err, token) {
       if (err) return done(err);
       token.write(function(err) {
-        Co.sys.debug('wrote token: ' + token.id);
         if (err) return done(err);
         r.tokens = [token.id];
         return done();   
@@ -121,14 +118,27 @@ var User = Record.extend({
   
   canShowAcl: function(acl) {
     if (this.group() === 'admin') return true ;
-    return acl.operationsForUser(this.id).length>0 ;
+    return acl.operationsForUser(this.id, this.group()).length>0 ;
   },
   
   // must be admin or owner
   canEditAcl: function(acl) {
     if (this.group() === 'admin') return true;
-    Co.sys.debug(acl.operationsForUser(this.id));
-    return acl.operationsForUser(this.id).indexOf('owners')>=0;
+    return acl.operationsForUser(this.id, this.group()).indexOf('owners')>=0;
+  },
+  
+  // user or group must be a reader, owner or an admin
+  canShowPackageInfo: function(packageInfo, acl) {
+    if (this.group() === 'admin') return true;
+    var ops = acl.operationsForUser(this.id, this.group());
+    return (ops.indexOf('owners')>=0) || (ops.indexOf('readers')>=0); 
+  },
+
+  // user or group must be owner or writer to modify
+  canEditPackageInfo: function(packageInfo, acl) {
+    if (this.group() === 'admin') return true;
+    var ops = acl.operationsForUser(this.id, this.group());
+    return (ops.indexOf('owners')>=0) || (ops.indexOf('writers')>=0);  
   },
   
   // ..........................................................

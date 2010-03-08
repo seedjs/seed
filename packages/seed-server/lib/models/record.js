@@ -23,7 +23,7 @@ var Record = Co.extend({
   },
   
   url: function() {
-    return '/seeds/'+this.kind+'/'+this.id;
+    return '/seed/'+this.kind+'/'+this.id;
   },
   
   indexPath: function() {

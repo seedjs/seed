@@ -5,7 +5,6 @@
 // ==========================================================================
 
 var Co     = require('seed:co'),
-    url    = require('url'),
     router = require('node-router'),
     server = require('server'),
     users  = require('resources/users'),

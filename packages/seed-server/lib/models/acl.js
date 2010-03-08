@@ -25,17 +25,40 @@ var Acl = Record.extend({
   kind: 'acls',
   
   usersForOperation: function(op) {
-    if (!this.isOpen) throw "Acl must be open";
-    return this.data[op] || [];
+    return this._idsForOperation(op, 'users');
   },
   
-  operationsForUser: function(userId) {
+  groupsForOperation: function(op) {
+    return this._idsForOperation(op, 'groups');
+  },
+
+  _idsForOperation: function(op, namespace) {
+    if (!this.isOpen) throw "Acl must be open";
+    var ret = [], ids = this.data[op] || [];
+    namespace = namespace+'/';
+    ids.forEach(function(key) {
+      if (key.indexOf(namespace)===0) {
+        ret.push(key.slice(namespace.length));
+      }
+    });
+    return ret ;
+  },
+  
+  operationsForUser: function(userId, groupId) {
     if (!this.isOpen) throw "Acl must be open";
     var ret = [], data = this.data;
+    
+    if (userId) userId = 'users/'+userId;
+    if (groupId) groupId = 'groups/'+groupId;
+    
     Acl.OPS.forEach(function(key) {
       var op = data[key];
-      if (op && (op.indexOf(userId)>=0)) ret.push(key);
+      if (op) {
+        if (userId && (op.indexOf(userId)>=0)) ret.push(key);
+        if (groupId && (op.indexOf(groupId)>=0)) ret.push(key);
+      }
     });
+    
     return ret ;
   },
   
@@ -60,10 +83,12 @@ var Acl = Record.extend({
     var r = Co.mixin({}, this.data);
 
     Acl.OPS.forEach(function(key) {
-      var val = data[key];
-      if ('string' === typeof val) val = [val];
-      if (!val) val = [];
-      r[key] = val;
+      if (data.hasOwnProperty(key)) {
+        var val = data[key];
+        if ('string' === typeof val) val = [val];
+        if (!val) val = [];
+        r[key] = val;
+      }
     }, this);
     
     this.data = r;

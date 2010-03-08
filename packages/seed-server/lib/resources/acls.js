@@ -57,12 +57,14 @@ exports.update = function(req, res, id, data) {
   });
 };
 
-// you can't create an Acl right now...
+// you can't create an Acl right now. Acls are created automatically when you
+// upload a new package
 exports.create = function(req, res, data) {
   return server.forbidden(res);
 };
 
-// you can't delete an Acl right now
+// you can't delete an Acl right now.  Acls are deleted automatically when 
+// you delete the corresponding package
 exports.destroy = function(req, res, id) {
   return server.forbidden(res);
 };

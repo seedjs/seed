@@ -7,6 +7,7 @@
 var Co = require('seed:co');
 var router = require('node-router');
 var O_RWX = 511; //0777
+var server = exports;
 
 // default settings
 exports.host = '0.0.0.0'; 
@@ -45,9 +46,11 @@ exports.start = function(opts, done) {
   // map resources
   router.resource('seed/users', require('resources/users'), 'json');
   router.resource('seed/tokens', require('resources/tokens'), 'json');
-  router.resource('seed/packages', require('resources/packages'), 'json');
-  exports.globResource(router, 'seed/acls', require('resources/acls'), 'json');
   router.resource('seed/assets', require('resources/assets'), 'undefined');
+
+  exports.globResource(router, 'seed/acls', require('resources/acls'), 'json');
+  exports.globResource(router, 'seed/packages', require('resources/packages'), 'json');
+  exports.globResource(router, 'seed/assets', require('resources/assets'), 'json');
 
   // cleanup tmp
   var tmppath = Co.path.join(exports.root, 'tmp');
@@ -64,9 +67,11 @@ exports.start = function(opts, done) {
 /**
   Helper method used by resources to return an error
 */
-exports.error = function(res, err) {
-  if ('number' === typeof err) res.simpleText(err, '');
-  else res.simpleText(503, err.toString());
+exports.error = function(res, err, desc) {
+  if ('number' === typeof err) res.simpleText(err, desc||'');
+  else if (err.status && err.message) {
+    res.simpleText(err.status, err.message);
+  } else res.simpleText(503, err.toString());
 };
 
 /**
@@ -170,4 +175,100 @@ exports.writeJson = function(path, content, done) {
   });
   
 };
+
+// responds with a path...
+exports.sendFile = function(res, path) {
+  
+  // file found, just stream it back
+  var contentType = router.mime.lookupExtension(Co.path.extname(path));
+  Co.fs.stat(path, function(err, stats) {
+    if (err) return server.error(res, err);
+
+    var len = stats.size, pos = 0;
+    Co.fs.open(path, 'r', 0, function(err, fd) {
+      if (err) return server.error(res, err);
+      
+      // ok we have a size + file is open so streaming should go OK...
+      res.sendHeader(200, [
+        ['Content-Type', contentType],
+        ['Content-Length', len],
+        ['Cache-Control', 'public']]);
+        
+      var readNext = function(done) {
+        if (pos>=len) return done();
+        Co.fs.read(fd, 4096, pos, 'binary', function(err, data, byteCnt) {
+          if (err) return done(err); // failed!
+          res.write(data, 'binary'); // write partial
+          Co.sys.debug('read bytes: ' + byteCnt);
+          pos += byteCnt;
+          readNext(done);
+        });
+      };
+      
+      readNext(function(err) {
+        if (err) Co.sys.debug(err);
+        Co.fs.close(fd);
+        res.close();
+      });
+      
+    });
+  });
+};
+
+// receives a file, writing it to the named path.  calls done when ready
+exports.receiveFile = function(req, path, done) {
+  Co.fs.mkdir_p(Co.path.dirname(path), 511, function(err) {
+    if (err) return done(err);
+    
+    Co.fs.open(path, 'w+', 511, function(err, fd) {
+      if (err) return done(err);
+      
+      // now we can just read streams of data and write them in
+      req.setBodyEncoding('binary');
+
+      // note we have to use this endWrite() method to make sure all file
+      // writes complete before we continue processing.  Otherwise you will
+      // sometimes get corrupt data
+      var level = 1;
+      function endWrite() {
+        if (--level <= 0) {
+          Co.sys.debug('receiveFile done');
+          done();
+        }
+      }
+      
+      // writes blocks of data in series...
+      var queue = [];
+      var writing = false;
+      
+      function writeChunk() {
+        if (writing) return;
+        
+        var chunk = queue.shift();
+        if (chunk !== undefined) {
+          writing = true;
+          Co.fs.write(fd, chunk, null, 'binary', function(err) {
+            if (err) return server.error(res, err);
+            writing = false;
+            endWrite();
+            writeChunk();
+          });
+        }
+      }
+      
+      req.addListener('data', function(chunk) {
+        level++;
+        queue.push(chunk);
+        writeChunk();
+      });
+      
+      req.addListener('end', function(){
+        endWrite();
+      });
+      
+      req.resume();
+    });
+  });
+};
+
 

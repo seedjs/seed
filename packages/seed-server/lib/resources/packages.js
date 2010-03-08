@@ -4,61 +4,202 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var Co     = require('seed:co');
-var router = require('node-router');
-var server = require('server');
-var tokens = require('resources/tokens');
-var url    = require('url');
-var semver = require('seed:semver');
-var packages  = exports;
+var Co     = require('seed:co'),
+    server = require('server'),
+    Token  = require('models/token'),
+    url    = require('url'),
+    semver = require('seed:semver'),
+    PackageInfo = require('models/package_info');
 
 // ..........................................................
 // RESOURCE API
 // 
 
-packages.show = function(req, res, id) {
-  var opts = url.parse(req.url, true).query,
-      vers = opts ? opts.version : null;
+// retrieves a list of all installed packages matching a given filter
+exports.index = function(req, res) {
+  var query = url.parse(req.url, true).query;
+  var offset = Number(query.offset),
+      limit  = Number(query.limit),
+      name   = query.name,
+      version = query.version, 
+      deps    = query.dependencies;
       
-  Co.chain(function(done) {
-    if (vers) return done(null, vers) ;
+  if (isNaN(offset)) offset = 0;
+  if (isNaN(limit)) limit = 10000000; // effectively no limit 
+  if (name) name = name.toLowerCase();
+  if (version) version = semver.normalize(version.toString());
+  
+  if (version && !name) {
+    return server.error(res, 400, 'version param requires name param');
+  }
+  
+  // only search for dependencies if requested AND filtering by name
+  if (deps) deps = deps.toLowerCase();
+  deps = (!!name && ((deps==='true') || (deps==='yes') || (deps==='1')));
     
-    var path = Co.path.join(server.root, 'packages', id);
-    Co.fs.readdir_p(path, function(err, versions) {
-      Co.sys.puts(Co.sys.inspect(versions));
-      if (!versions || (versions.length===0)) return res.notFound();
-      versions.forEach(function(curVers) {
-        curVers = curVers.slice(0, -5); // cut off .json
-        if (!vers || (semver.compare(vers, curVers)<0)) vers = curVers;
-      });
-      return done(null, vers); // picked latest
-    });
-  },
-  
-  function(vers, done) {
-    var path = Co.path.join(server.root, 'packages', id, vers+'.json');
-    server.readJson(path, function(err, info) {
-      if (err) return done(err);
+  Token.validate(req, function(err, currentUser) {
+    if (err || !currentUser) return server.error(res, err || 403, 'No valid user');
+
+    // find all packages
+    Co.chain(function(done){
+      PackageInfo.findAll(done);
+
+    // then filter by name or version if needed
+    }, function(packages, done) {
+      Co.sys.debug('1: found: ' + packages.map(function(p) { return p.id; }).join(',') + ' name = ' + name);
       
-      if (!info) res.notFound();
-      else res.simpleJson(200, info);
-      return done(); // ok!
+      if (!name) return done(null, packages);  // skip this filter
+      Co.reduce(packages, [], function(ret, packageInfo, done) {
+        if (packageInfo.name().toLowerCase() === name) {
+          if (!version || (packageInfo.version() === version)) {
+            ret.push(packageInfo);
+          }
+        }
+        done(null, ret);
+      })(done);
+
+    // if we require dependencies, then find all dependencies
+    // note that at top we make sure dep is always false if not filtering 
+    // by name
+    }, function(packages, done) {
+      Co.sys.debug('2: found: ' + packages.map(function(p) { return p.id; }).join(',') + ' deps = ' + deps);
+
+      if (!deps) return done(null, packages); // nothing to do
+      
+      var ret = [], seen = {};
+      
+      function addPackage(packageInfo, done) {
+        if (seen[packageInfo.id]) return done();
+
+        ret.push(packageInfo);
+        seen[packageInfo.id] = true;
+        
+        Co.each(packageInfo.dependencies(), function(packageId, done) {
+          PackageInfo.findCompatible(packageId, function(err, curInfo) {
+            if (err) return done(err);
+            if (!curInfo) done(); // nothing to do if dependency not found
+            else addPackage(curInfo, done);
+          });
+        })(done);
+      }
+      
+      Co.each(packages, function(curInfo, done) {
+        addPackage(curInfo, done);
+      })(function(err) {
+        if (err) return done(err);
+        else return done(null, ret);
+      });
+      
+    // finally filter based on if you have access to see a given package
+    }, function(packages, done) {
+      Co.sys.debug('3: found: ' + packages.map(function(p) { return p.id; }).join(','));
+
+      Co.filter(packages, function(packageInfo, done) {
+        // first, only return packages you can show for this user
+        packageInfo.acl(function(err, acl) {
+          if (err) return done(err);
+          var ret = acl && currentUser.canShowPackageInfo(packageInfo, acl);
+          return done(null, ret);
+        });
+      })(done);
+
+    // encode and return
+    })(function(err, packages) {
+      Co.sys.debug('4: found: ' + packages.map(function(p) { return p.id; }).join(','));
+
+      if (err) return done(err);
+      packages = packages.map(function(packageInfo) {
+        return packageInfo.indexJson(currentUser);
+      });
+      var count = packages.length;
+      if ((offset>0) || (limit<count)) {
+        packages = packages.slice(offset, offset+limit);
+      }
+      
+      return res.simpleJson(200, { 
+        "offset": offset,
+        "count": count,
+        "records": packages
+      });
     });
-  })(function(err) {
-    if (err) return server.error(err);
+    
   });
+};
+
+
+// you can only retrieve package info if you or your group are readers or you
+// are admin
+exports.show = function(req, res, id) {
+  var idx = id.indexOf('/'), version = null;
+  if (idx>=0) {
+    version = id.slice(idx+1);
+    id = id.slice(0,idx);
+  }
+
+  Token.validate(req, function(err, currentUser) {
+    if (err || !currentUser) return server.error(res, err || 403);
+    
+    // if no version was specified then discover the latest version installed
+    // and use that instead
+    (function(done) {
+      if (version) return done(null, version);
+      PackageInfo.latestVersionFor(id, done);
+      
+    })(function(err, version) {
+      if (err|| !version) return server.error(res, err || 404, 'No matching version');
+      
+      id = Co.path.join(id, version);
+      Co.sys.debug('finding packageId='+id);
+      PackageInfo.find(id, function(err, packageInfo) {
+        if (err || !packageInfo) return server.error(res, err || 404, 'No matching package');
+        packageInfo.acl(function(err, acl) {
+          if (err || !acl) return server.error(res, err || 'missing acl');
+          if (!currentUser.canShowPackageInfo(packageInfo, acl)) {
+            return server.forbidden(res);
+          }
+
+          return res.simpleJson(200, packageInfo.showJson(currentUser));
+        });
+      });
+    });
+  });
+};
+
+// you can't modify package info once it is deployed
+exports.update = function(req, res, id) {
+  return server.error(res, 403, 'Package info is updated automatically when you publish new assets');
+};
+
+// you can't create new packages.  Just publish new package assets to make 
+// the info available.
+exports.create = function(req, res, id) {
+  return server.error(res, 403, "To create a new package, just upload a new package asset");
+};
+
+// you can destroy a single package version or all versions of a package.  
+// This will delete any associated Acls and assets.  You must be an owner or
+// writer of the package to destroy it or admin
+exports.destroy = function(req, res, id) {
+  var idx = id.indexOf('/'), version = null;
+  if (idx>=0) {
+    version = id.slice(idx+1);
+    id = id.slice(0,idx);
+  }
   
+  Token.validate(req, function(err, currentUser) {
+    if (err || !currentUser) return server.error(res, err || 403);
+  });
 };
 
 // ..........................................................
 // HELPERS
 // 
 
-packages.install = function(pkg, assetFilename, done) {
-  var info = Co.mixin({}, pkg.info()); // copy and fixup
-  info['link-asset'] = '/seed/assets/'+assetFilename;
-  info['link-self'] = '/seed/packages/'+pkg.name()+'?version='+pkg.version();
-
-  var infoPath = Co.path.join(server.root, 'packages', pkg.name(), pkg.version() + '.json');
-  server.writeJson(infoPath, info, done);
+exports.install = function(pkg, assetFilename, done) {
+  // var info = Co.mixin({}, pkg.info()); // copy and fixup
+  // info['link-asset'] = '/seed/assets/'+assetFilename;
+  // info['link-self'] = '/seed/packages/'+pkg.name()+'?version='+pkg.version();
+  // 
+  // var infoPath = Co.path.join(server.root, 'packages', pkg.name(), pkg.version() + '.json');
+  // server.writeJson(infoPath, info, done);
 };
