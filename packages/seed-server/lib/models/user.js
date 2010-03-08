@@ -88,6 +88,10 @@ var User = Record.extend({
            ((user.id===this.id) || (this.group() === 'admin'));
   },
   
+  canCreateTokenForUser: function(user) {
+    return (user.id === this.id) || (this.group() === 'admin');
+  },
+  
   canGetUserIndex: function() {
     return (this.id !== 'anonymous') && (this.group() !== 'guest');
   },
@@ -109,6 +113,22 @@ var User = Record.extend({
   // a user or admin can destroy himself
   canDestroyUser: function(user) {
     return (this.group() === 'admin') || (user.id === this.id);
+  },
+  
+  canSeeAcls: function() {
+    return this.group() === 'admin';
+  },
+  
+  canShowAcl: function(acl) {
+    if (this.group() === 'admin') return true ;
+    return acl.operationsForUser(this.id).length>0 ;
+  },
+  
+  // must be admin or owner
+  canEditAcl: function(acl) {
+    if (this.group() === 'admin') return true;
+    Co.sys.debug(acl.operationsForUser(this.id));
+    return acl.operationsForUser(this.id).indexOf('owners')>=0;
   },
   
   // ..........................................................

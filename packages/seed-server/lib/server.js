@@ -13,6 +13,15 @@ exports.host = '0.0.0.0';
 exports.port = '80';
 exports.root = '~/.seeds/server';
 
+// registers a new resource on the router - globbing any remaining components
+exports.globResource = function (router, name, controller, format) {
+  router.get(new RegExp('^/' + name + '$'), controller.index);
+  router.get(new RegExp('^/' + name + '/(.+)$'), controller.show);
+  router.post(new RegExp('^/' + name + '$'), controller.create, format);
+  router.put(new RegExp('^/' + name + '/(.+)$'), controller.update, format);
+  router.del(new RegExp('^/' + name + '/(.+)$'), controller.destroy);
+};
+
 /**
   Starts the server.  options should include:
   
@@ -37,6 +46,7 @@ exports.start = function(opts, done) {
   router.resource('seed/users', require('resources/users'), 'json');
   router.resource('seed/tokens', require('resources/tokens'), 'json');
   router.resource('seed/packages', require('resources/packages'), 'json');
+  exports.globResource(router, 'seed/acls', require('resources/acls'), 'json');
   router.resource('seed/assets', require('resources/assets'), 'undefined');
 
   // cleanup tmp

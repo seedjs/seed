@@ -118,7 +118,7 @@ Record.find = function(id, done) {
 Record.findAll = function(done) {
   var RecordType =this;
   var path = RecordType.prototype.indexPath();
-  Co.fs.readdir_p(path, function(err, ids) {
+  Co.fs.glob(path, function(err, ids) {
     if (err) return done(err);
     if (!ids) ids = [];
     Co.collect(ids, function(id, done) { 

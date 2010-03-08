@@ -6,8 +6,8 @@
 
 var Co     = require('seed:co'),
     server = require('server'),
-    tokens = require('resources/tokens'),
-    User   = require('models/user');
+    User   = require('models/user'),
+    Token  = require('models/token');
     
 // ..........................................................
 // SERVER ACTIONS
@@ -16,7 +16,7 @@ var Co     = require('seed:co'),
 // index action - returns all users in system
 // you must be a user to get this information - not anonymous or guest
 exports.index = function(req, res) {
-  tokens.validate(req, function(err, currentUser) {
+  Token.validate(req, function(err, currentUser) {
     if (err) return server.error(res, err);
     if (currentUser.canGetUserIndex()) return server.forbidden(403);
     
@@ -35,7 +35,7 @@ exports.index = function(req, res) {
 
 // you must be a current user to retrieve information about another user
 exports.show = function(req, res, id) {
-  tokens.validate(req, function(err, currentUser) {
+  Token.validate(req, function(err, currentUser) {
     if (err) return server.error(res, err);
     
     User.find(id, function(err, user) {
@@ -53,7 +53,7 @@ exports.show = function(req, res, id) {
 exports.create = function(req, res, body) {
   if (!body || !body.id) return server.error(res, 401);
 
-  tokens.validate(req, function(err, currentUser) {
+  Token.validate(req, function(err, currentUser) {
     User.create(body.id, body, function(err, user) {
       if (err) return server.error(res, err);
       if (!currentUser.canCreateUser(user)) return server.forbidden(res);
@@ -72,7 +72,7 @@ exports.create = function(req, res, body) {
 // must be user or admin
 exports.destroy = function(req, res, id) {
 
-  tokens.validate(req, function(err, currentUser) {
+  Token.validate(req, function(err, currentUser) {
     if (err) return server.error(res, err);
     User.find(id, function(err, user) {
       if (err) return server.error(res, err);
