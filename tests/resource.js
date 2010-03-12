@@ -8,7 +8,7 @@
 process.mixin(require('./common'));
 
 var Resource = require('resource'), 
-    Co       = require('co');
+    Co       = require('private/co');
     
 // simple concrete implementation
 var File = Co.extend(Resource, {

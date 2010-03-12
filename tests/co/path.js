@@ -7,7 +7,7 @@
 
 process.mixin(require('../common'));
 
-var Co = require('co');
+var Co = require('private/co');
 
 // ..........................................................
 // EXISTS

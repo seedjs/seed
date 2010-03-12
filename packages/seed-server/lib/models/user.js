@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var Co     = require('seed:co'),
+var Co     = require('seed:private/co'),
     server = require('server'),
     Record = require('models/record'),
     Token; // fill in later to avoid cycles
@@ -59,7 +59,7 @@ var User = Record.extend({
     if (data.digest) {
       r.password = data.digest;
     } else if (data.password) {
-      r.password = require('seed:md5').b64(data.password);
+      r.password = require('seed:private/md5').b64(data.password);
     }
 
     r.group = 'member';
@@ -91,7 +91,7 @@ var User = Record.extend({
     if (data.digest) {
       r.password = data.digest;
     } else if (data.password) {
-      r.password = require('seed:md5').b64(data.password);
+      r.password = require('seed:private/md5').b64(data.password);
     }
     
     if (!r.email) return done(401); // you can't delete the email

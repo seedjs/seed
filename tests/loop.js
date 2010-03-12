@@ -9,7 +9,7 @@ process.mixin(require('./common'));
 
 var loop = require('private/loop');
 
-var Co = require('co');
+var Co = require('private/co');
 
 Co.fs.stat(__filename, function(err, stat) {
   Co.sys.puts("stat1");

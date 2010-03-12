@@ -8,7 +8,7 @@
 /*globals __dirname  process */
 
 // Runs once to install seed. 
-var Co = require('../lib/co');
+var Co = require('../lib/private/co');
 
 var SEED_DIR = Co.path.normalize(Co.path.join(__dirname, '..')),
     NODE_LIBRARIES = Co.path.join(process.env.HOME, '.node_libraries'),

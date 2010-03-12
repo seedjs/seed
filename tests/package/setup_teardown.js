@@ -8,7 +8,7 @@
 process.mixin(require('../common'));
 
 var Package = require('package');
-var Co = require('co');
+var Co = require('private/co');
 var installingDir = path.join(fixturesDir, 'installing');
 
 var pkg = Package.open(installingDir);

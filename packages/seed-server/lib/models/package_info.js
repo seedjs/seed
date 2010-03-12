@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var Co     = require('seed:co'),
+var Co     = require('seed:private/co'),
     server = require('server'),
     Record = require('models/record'),
     Acl    = require('models/acl'),

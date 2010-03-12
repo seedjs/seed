@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var Co = require('seed:co');
+var Co = require('seed:private/co');
 var router = require('node-router');
 var cache  = require('cache');
 var O_RWX = 511; //0777

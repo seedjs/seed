@@ -4,7 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
-var Co     = require('seed:co'),
+var Co     = require('seed:private/co'),
     server = require('server'),
     Record = require('models/record'),
     url    = require('url'),
@@ -52,7 +52,7 @@ Token.validate = function(req, done) {
     tokenId = query.token;
     username = query.username;
     if (query.password) {
-      password = require('seed:md5').b64(query.password);
+      password = require('seed:private/md5').b64(query.password);
     } else if (query.digest) {
       password = query.digest;
     }
