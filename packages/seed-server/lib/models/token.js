@@ -47,19 +47,41 @@ var Token = Record.extend({
   user.
 */
 Token.validate = function(req, done) {
-  var query = url.parse(req.url, true).query, tokenId;
-  if (query) tokenId = query.token;
-  
+  var query = url.parse(req.url, true).query, tokenId, username, password;
+  if (query) {
+    tokenId = query.token;
+    username = query.username;
+    if (query.password) {
+      password = require('seed:md5').b64(query.password);
+    } else if (query.digest) {
+      password = query.digest;
+    }
+  }
+
+  // first attempt to lookup the user.  
   (function(done) {
-    if (tokenId) {
+    
+    // username/password auth
+    if (username) {
+      User.find(username, function(err, user) {
+        if (err) return done(err);
+        if (!user || !(user.password()===password)) return done(); 
+        else return done(null, user);
+      });
+    
+    // token auth (preferred mode);
+    } else if (tokenId) {
       tokenId = tokenId.toLowerCase();
       Token.find(tokenId, function(err, token) {
         if (err) return done(err);
         if (!token) return done();
         else return token.user(done);
       });
+      
+    // no auth...
     } else return done();
     
+  // if no user is found, map to anonymous
   })(function(err, user) {
     if (err) return done(err);
     if (user) return done(null, user);

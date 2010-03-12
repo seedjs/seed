@@ -18,19 +18,24 @@ var Co     = require('seed:co'),
   Accept an upload - you must be a valid user and not a guest to do this
 */
 exports.create = function(req, res, body) {
-  Token.validate(req, function(err, currentUser) {
-    if (err || !currentUser) return server.error(res, err || 403, 'No valid user');
 
-    // pick a filename to make sure its unique
-    var path = Co.path.join(server.root, 'tmp', server.uuid()+'.zip');
-    server.receiveFile(req, path, function(err) {
-      if (err) return server.error(res, err);
+  // note - receive file right away.  Otherwise some data may drop on the 
+  // floor
+  var path = Co.path.join(server.root, 'tmp', server.uuid()+'.zip');
+  server.receiveFile(req, path, function(err) {
+    if (err) return server.error(res, err);
+    Token.validate(req, function(err, currentUser) {
+      if (err || !currentUser) {
+        Co.sys.debug(err || 'no valid user');
+        return server.error(res, err || 403, 'No valid user');
+      }
+
       exports.process(path, currentUser, function(err) {
         if (err) server.error(res, err);
         else res.simpleText(200, 'OK');
       });
     });
-  });
+  });  
 };
 
 /**

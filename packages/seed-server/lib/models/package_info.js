@@ -124,6 +124,7 @@ PackageInfo.install = function(pkg, srcPath, currentUser, done) {
   var assetFilename = pkg.name() + '-' + pkg.version() + '.zip';
   
   Co.chain(function(done) {
+    done();
     PackageInfo.find(packageId, function(err, packageInfo) {
       if (!err && packageInfo) {
         err = {
@@ -136,6 +137,20 @@ PackageInfo.install = function(pkg, srcPath, currentUser, done) {
     });
   },
 
+  // does not exist.  Try to find a matching acl and make sure user has perm
+  function(done) {
+    var aclId = packageId, idx = aclId.lastIndexOf('/');
+    if (idx>=0) aclId = aclId.slice(0,idx);
+    aclId = 'packages/'+aclId;
+    
+    Acl.find(aclId, function(err, acl) {
+      if (err) return done(err);
+      if (!currentUser.canUploadPackage(acl)) {
+        return done({ status: 403, message: 'Not package owner or writer' });
+      } else return done(); 
+    });
+  },
+  
   // does not exist, copy over the asset then create the package...
   function(done) {
     var dstPath = Co.path.join(server.root, 'assets', assetFilename);

@@ -6,7 +6,11 @@
   // defines the locations for seed repositories on the local machine
   // override with a local.json if you need to do something different
   "seed": {
-    "repositories":  ["~/.seeds", "/usr/local/seeds"],
+    "repositories":  {
+      "local": "~/.seeds",
+      "global": "/usr/local/seeds"
+    },
+        
     "commands": {
       "install": "seed:commands/install",
       "remove":  "seed:commands/remove",
@@ -14,7 +18,9 @@
       "help":    "seed:commands/help",
       "update":  "seed:commands/update",
       "freeze":  "seed:commands/freeze",
-      "server":  "seed-server:command"
+      "remote":  "seed:commands/remote",
+      "server":  "seed-server:command",
+      "push":    "seed:commands/push"
     }
   }
 }

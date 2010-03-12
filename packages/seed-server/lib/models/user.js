@@ -27,6 +27,10 @@ var User = Record.extend({
     })(done); 
   },
   
+  password: function() {
+    return this.data.password || null;
+  },
+  
   // tokens are dependent properties of users.  
   destroy: function(done) {
     var user = this;
@@ -45,13 +49,19 @@ var User = Record.extend({
       });
     });
   },
-  
+
   prepare: function(data, done) {
     var r = {};
     r.id = this.id;
     r.email = data.email;
     r.name  = data.name;
-    r.password = data.password;
+
+    if (data.digest) {
+      r.password = data.digest;
+    } else if (data.password) {
+      r.password = require('seed:md5').b64(data.password);
+    }
+
     r.group = 'member';
 
     if (!r.email || !r.id) return done(401);
@@ -70,6 +80,24 @@ var User = Record.extend({
       });
     });
     
+  },
+  
+  update: function(data, done) {
+    var r = Co.mixin({}, this.data);
+    ['email', 'name'].forEach(function(key) {
+      if (data[key]) r[key] = data[key];  
+    });
+
+    if (data.digest) {
+      r.password = data.digest;
+    } else if (data.password) {
+      r.password = require('seed:md5').b64(data.password);
+    }
+    
+    if (!r.email) return done(401); // you can't delete the email
+    if (!r.email || !r.id) return done(401);
+    this.data = r;
+    return this.write(done);
   },
   
   // ..........................................................
@@ -112,6 +140,10 @@ var User = Record.extend({
     return (this.group() === 'admin') || (user.id === this.id);
   },
   
+  canEditUser: function(user) {
+    return (this.group() === 'admin') || (user.id === this.id);
+  },
+  
   canSeeAcls: function() {
     return this.group() === 'admin';
   },
@@ -141,6 +173,13 @@ var User = Record.extend({
     return (ops.indexOf('owners')>=0) || (ops.indexOf('writers')>=0);  
   },
   
+  canUploadPackage: function(acl) {
+    if (!acl) return this.id !== 'anonymous';
+    if (this.group() === 'admin') return true;
+    var ops = acl.operationsForUser(this.id, this.group());
+    return (ops.indexOf('writers')>=0) || (ops.indexOf('owners')>=0);  
+  },
+  
   // ..........................................................
   // Filtered Data
   // 
@@ -149,6 +188,7 @@ var User = Record.extend({
     if (!this.isOpen) throw "record must be open before getting index";
     var ret = Co.mixin({}, this.data);
     ret['link-self'] = this.url();
+    delete ret.password; // never return password
     if (!currentUser || !currentUser.canSeeTokensForUser(this)) {
       delete ret.tokens;
     }

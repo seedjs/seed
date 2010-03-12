@@ -4,6 +4,7 @@
 // License:   Licened under MIT license (see __preamble__.js)
 // ==========================================================================
 
+var Co = require('seed:co');
 
 /**
   @file 
@@ -25,20 +26,24 @@ exports.read = function(key, alt, done) {
 
   var ret = cache[key];
   if ((ret === undefined) && alt) {
+    Co.sys.debug('cache miss: ' + key);
     alt(function(err, value) {
       if (err) return done(err);
       ret = cache[key] = value;
       return done(null, ret);
     });
-  } else return done(null, ret);
+  } else {
+    Co.sys.debug('cache hit: ' + key);
+    return done(null, ret);
+  }
 };
 
 exports.write = function(key, value, done) {
   cache[key] = value;
-  return done();
+  if (done) done();
 };
 
 exports.remove = function(key, done) {
   delete cache[key];
-  return done();
+  if (done) done();
 };

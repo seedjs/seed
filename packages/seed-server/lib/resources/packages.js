@@ -18,11 +18,19 @@ var Co     = require('seed:co'),
 // retrieves a list of all installed packages matching a given filter
 exports.index = function(req, res) {
   var query = url.parse(req.url, true).query;
-  var offset = Number(query.offset),
-      limit  = Number(query.limit),
-      name   = query.name,
-      version = query.version, 
-      deps    = query.dependencies;
+  var offset, limit, name, version, deps;
+  
+  if (query) {
+    offset = Number(query.offset);
+    limit  = Number(query.limit);
+    name   = query.name;
+    version = query.version;
+    deps    = query.dependencies;
+  } else {
+    offset = 0;
+    limit = 1000000;
+    name = version = deps = null;
+  }
       
   if (isNaN(offset)) offset = 0;
   if (isNaN(limit)) limit = 10000000; // effectively no limit 
@@ -33,7 +41,7 @@ exports.index = function(req, res) {
     return server.error(res, 400, 'version param requires name param');
   }
   
-  // only search for dependencies if requested AND filtering by name
+  // search for dependencies if requested AND filtering by name
   if (deps) deps = deps.toLowerCase();
   deps = (!!name && ((deps==='true') || (deps==='yes') || (deps==='1')));
     

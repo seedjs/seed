@@ -50,6 +50,7 @@ exports.index = function(req, res) {
 // an admin user can create a token for anyone.  everyone else can create 
 // tokens for themselves
 exports.create = function(req, res, body) {
+  Co.sys.puts(body);
   if (!body) return server.error(res, 400);
   
   Token.validate(req, function(err, currentUser) {

@@ -18,7 +18,7 @@ var Co     = require('seed:co'),
 exports.index = function(req, res) {
   Token.validate(req, function(err, currentUser) {
     if (err) return server.error(res, err);
-    if (currentUser.canGetUserIndex()) return server.forbidden(403);
+    if (!currentUser.canGetUserIndex()) return server.forbidden(res);
     
     // find all users and generate index JSON
     User.findAll(function(err, users) {
@@ -45,6 +45,22 @@ exports.show = function(req, res, id) {
       return res.simpleJson(200, user.showJson(currentUser));
     });
 
+  });
+};
+
+// only the owner or admin can update
+exports.update = function(req, res, id, body) {
+  if (!body) return server.error(res, 401);
+  Token.validate(req, function(err, currentUser) {
+    if (err || !currentUser) return server.error(res, err || 403);
+    User.find(id, function(err, user) {
+      if (err || !user) return server.err(res, err || 404, 'User not found');
+      if (!currentUser.canEditUser(user)) return server.forbidden(res);
+      user.update(body, function(err) {
+        if (err) return server.error(res, err);
+        return res.simpleText(200, '');
+      });
+    });
   });
 };
 

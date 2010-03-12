@@ -6,6 +6,7 @@
 
 var Co = require('seed:co');
 var router = require('node-router');
+var cache  = require('cache');
 var O_RWX = 511; //0777
 var server = exports;
 
@@ -83,64 +84,28 @@ exports.forbidden = function(res, reason) {
 };
 
 
-// Private array of chars to use
-var CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
-
-/**
-  Generates a UUID.  Based on code from:
-  
-  http://www.broofa.com/Tools/Math.uuid.js
-  
-  Copyright (c) 2009 Robert Kieffer
-  Under MIT license
-  
-*/
-exports.uuid = function (len, radix) {
-  var chars = CHARS, uuid = [], i;
-  radix = radix || chars.length;
-
-  if (len) {
-    // Compact form
-    for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
-  } else {
-    // rfc4122, version 4 form
-    var r;
-
-    // rfc4122 requires these characters
-    uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
-    uuid[14] = '4';
-
-    // Fill in random data.  At i==19 set the high bits of clock sequence as
-    // per rfc4122, sec. 4.1.5
-    for (i = 0; i < 36; i++) {
-      if (!uuid[i]) {
-        r = 0 | Math.random()*16;
-        uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
-      }
-    }
-  }
-
-  return uuid.join('').toLowerCase();
-};
+exports.uuid = Co.uuid;
 
 /**
   Reads a JSON file from disk.
 */
 exports.readJson = function(path, done) {
-  Co.path.exists(path, function(err, exists) {
-    if (err) return done(err);
-    if (exists) {
-      Co.fs.readFile(path, function(err, content) {
-        if (err) return done(err);
-        try {
-          content = JSON.parse(content);
-        } catch(e) {
-          return done(e);
-        }
-        return done(null, content);
-      });
-    } else return done(); // not found
-  });
+  cache.read(path, function(done) {
+    Co.path.exists(path, function(err, exists) {
+      if (err) return done(err);
+      if (exists) {
+        Co.fs.readFile(path, function(err, content) {
+          if (err) return done(err);
+          try {
+            content = JSON.parse(content);
+          } catch(e) {
+            return done(e);
+          }
+          return done(null, content);
+        });
+      } else return done(); // not found
+    });
+  }, done);
 };
 
 /**
@@ -153,23 +118,29 @@ exports.writeJson = function(path, content, done) {
   } catch(e) {
     return done(e);
   }
+
+  function resetCache(err) {
+    cache.remove(path, function(err2) {
+      return done(err || err2);
+    });
+  }
   
   Co.path.exists(path, function(err, exists) {
-    if (err) return done(err);
+    if (err) return resetCache(err);
     
     // if file already exists - delete it then write
     if (exists) {
       Co.fs.rm_r(path, function(err) {
-        if (err) return done(err);
-        Co.fs.writeFile(path, content, function(err) { done(err); });
+        if (err) return resetCache(err);
+        Co.fs.writeFile(path, content, function(err) { resetCache(err); });
       });
       
     // file does not exist - make containing dirs and then write
     } else {
 
       Co.fs.mkdir_p(Co.path.dirname(path), O_RWX, function(err) {
-        if (err) return done(err);
-        Co.fs.writeFile(path, content, function(err) { done(err); });
+        if (err) return resetCache(err);
+        Co.fs.writeFile(path, content, function(err) { resetCache(err); });
       });
     }
   });
@@ -199,7 +170,6 @@ exports.sendFile = function(res, path) {
         Co.fs.read(fd, 4096, pos, 'binary', function(err, data, byteCnt) {
           if (err) return done(err); // failed!
           res.write(data, 'binary'); // write partial
-          Co.sys.debug('read bytes: ' + byteCnt);
           pos += byteCnt;
           readNext(done);
         });
@@ -217,56 +187,65 @@ exports.sendFile = function(res, path) {
 
 // receives a file, writing it to the named path.  calls done when ready
 exports.receiveFile = function(req, path, done) {
-  Co.fs.mkdir_p(Co.path.dirname(path), 511, function(err) {
-    if (err) return done(err);
-    
-    Co.fs.open(path, 'w+', 511, function(err, fd) {
-      if (err) return done(err);
-      
-      // now we can just read streams of data and write them in
-      req.setBodyEncoding('binary');
 
-      // note we have to use this endWrite() method to make sure all file
-      // writes complete before we continue processing.  Otherwise you will
-      // sometimes get corrupt data
-      var level = 1;
-      function endWrite() {
-        if (--level <= 0) {
-          Co.sys.debug('receiveFile done');
-          done();
-        }
-      }
-      
-      // writes blocks of data in series...
-      var queue = [];
-      var writing = false;
-      
-      function writeChunk() {
-        if (writing) return;
-        
-        var chunk = queue.shift();
-        if (chunk !== undefined) {
-          writing = true;
-          Co.fs.write(fd, chunk, null, 'binary', function(err) {
-            if (err) return server.error(res, err);
-            writing = false;
-            endWrite();
-            writeChunk();
-          });
-        }
-      }
-      
-      req.addListener('data', function(chunk) {
-        level++;
-        queue.push(chunk);
+  var queue = [];
+  var writing = false;
+  var level = 1;
+  var cancelled = false;
+  var fd = null;
+  
+  function endWrite() {
+    if (--level <= 0) {
+      return done(); // success
+    }
+  }
+  
+  function writeChunk() {
+    if (writing || !fd) return ; // can't run yet
+    var chunk = queue.shift();
+    if (chunk !== undefined) {
+      writing = true;
+      Co.fs.write(fd, chunk, null, 'binary', function(err) {
+        if (err) return server.error(res, err);
+        writing = false;
+        endWrite();
         writeChunk();
       });
-      
-      req.addListener('end', function(){
-        endWrite();
-      });
-      
-      req.resume();
+    }
+  }
+  
+  function cancel(err) {
+    if (cancelled) return true;
+    cancelled = true;
+    return done(err);
+  }
+  
+  // now we can just read streams of data and write them in
+  req.setBodyEncoding('binary');
+  
+  // Add listener to receive data immediately...
+  req.addListener('data', function(chunk) {
+    if (cancelled) return ; // nothing to do
+    level++;
+
+    queue.push(chunk);
+    writeChunk();
+  });
+  
+  // finished - endWrite which will unlock flushing
+  req.addListener('end', function(){
+    if (cancelled) return;
+    endWrite();
+  });
+  
+  // also, setup fd
+  Co.fs.mkdir_p(Co.path.dirname(path), 511, function(err) {
+    if (err) cancel(err);
+    
+    Co.fs.open(path, 'w+', 511, function(err, newFd) {
+      if (err) cancel(err);
+      fd = newFd; // save fd and flush any pending data
+      writeChunk();
     });
   });
 };
