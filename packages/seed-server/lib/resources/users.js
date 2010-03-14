@@ -76,8 +76,8 @@ exports.create = function(req, res, body) {
       user.write(function(err) {
         if (err) return server.error(res, err);
         return res.simpleJson(201, user.showJson(user), [
-          ['Location', user.url()],
-          ['X-Seed-Token', user.tokenIds()[0]]
+          ['X-Seed-Token', user.tokenIds()[0]], // note: must come first
+          ['Location', user.url()]
         ]);
         
       });
