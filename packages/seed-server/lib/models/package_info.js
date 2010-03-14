@@ -73,6 +73,7 @@ PackageInfo.findAll = function(done) {
   var path = Co.path.join(server.root, 'packages');
   Co.fs.glob(path, function(err, filenames) {
     if (err) return done(err);
+    if (!filenames) filenames = [];
     Co.reduce(filenames, [], function(ret, filename, done) {
       if (!filename.match(/\.json$/)) return done(null, ret); //nothing to do
       filename = filename.slice(0, -5); // cut .json
