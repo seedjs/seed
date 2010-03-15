@@ -125,7 +125,6 @@ PackageInfo.install = function(pkg, srcPath, currentUser, done) {
   var assetFilename = pkg.name() + '-' + pkg.version() + '.zip';
   
   Co.chain(function(done) {
-    done();
     PackageInfo.find(packageId, function(err, packageInfo) {
       if (!err && packageInfo) {
         err = {
