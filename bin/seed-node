@@ -9,4 +9,6 @@ process.argv = process.argv.slice(0,1).concat(process.argv.slice(2));
 var seed = require('seed');
 var path = require('path');
 if (src.match(/^\.\.?\//)) src = path.normalize(path.join(process.cwd(),src));
+
 seed.require(src);
+
