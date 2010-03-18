@@ -10,7 +10,7 @@ var loop = require('private/loop');
 var Co = require('private/co');
 
 Co.fs.stat(__filename, function(err, stat) {
-  Co.sys.puts("stat1");
+  Co.println("stat1");
 
   var looped = false;
   var unlooped = false;
@@ -30,12 +30,12 @@ Co.fs.stat(__filename, function(err, stat) {
   }
   
   Co.fs.stat(__filename, function(err, stat2) {
-    Co.sys.puts("stat2");
+    Co.println("stat2");
     fire();
   });
   
   timer = setTimeout(function() {
-    Co.sys.puts('unloop');
+    Co.println('unloop');
     fire();
   });
 
