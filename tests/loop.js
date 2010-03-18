@@ -5,10 +5,8 @@
 // ==========================================================================
 /*global process path sys assert libDir __filename */
 
-process.mixin(require('./common'));
-
+var Ct = require('core_test:sync');
 var loop = require('private/loop');
-
 var Co = require('private/co');
 
 Co.fs.stat(__filename, function(err, stat) {
