@@ -19,8 +19,10 @@
       "update":  "seed:commands/update",
       "freeze":  "seed:commands/freeze",
       "remote":  "seed:commands/remote",
-      "server":  "seed-server:command",
       "push":    "seed:commands/push"
     }
-  }
+  },
+  
+  "seed-loader": { ".js": "seed:loader" }
+  
 }
