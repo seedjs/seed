@@ -2,10 +2,15 @@
   "name": "seed",
   "version": "0.1.1",
   "description": "Flexible package manager for CommonJS",
-  "source": "git://github.com/seedjs/seed.git",
   "site":   "http://www.seedjs.org",
   "author": "Charles Jolley <charles@sproutit.com>",
   "keywords": ["package manager", "package installer"],
+
+  "repositories": [
+    { "type": "git", "url": "git://github.com/seedjs/seed.git" }
+  ],
+
+  "licenses": [{ "type": "MIT" }],
   
   // defines the locations for storing seeds on the local machine
   // override with a local.json if you need to do something different
@@ -26,7 +31,8 @@
     "freeze":   "seed:commands/freeze",
     "unfreeze": "seed:commands/unfreeze",
     "remote":   "seed:commands/remote",
-    "push":     "seed:commands/push"
+    "push":     "seed:commands/push",
+    "fork":     "seed:commands/fork" 
   },
   
   // Loader plugins by file extension.  Name in your own packages to add them
@@ -34,5 +40,5 @@
   "seed-loader": { 
     ".js": "seed:loader" 
   }
-  
+    
 }
