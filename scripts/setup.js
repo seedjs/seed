@@ -20,7 +20,7 @@ var O_RWX = 511; //0777
 Co.chain(function(done) {
   var cmd = 'cd '+SEED_DIR+'; node-waf configure build';
   Co.println(cmd);
-  Co.sys.exec(cmd, function(err, str) {
+  Co.exec(cmd, function(err, str) {
     if (err) return done(err);
     Co.println(str);
     return done();
@@ -48,7 +48,7 @@ Co.chain(function(done) {
         return done();
         
       } else {
-        Co.sys.exec(cmd, Co.err(done));
+        Co.exec(cmd, Co.err(done));
       }
     });
 
@@ -75,7 +75,7 @@ Co.chain(function(done) {
             return done(); // skip
           } else {
             Co.println(cmd);
-            Co.sys.exec(cmd, Co.err(done));
+            Co.exec(cmd, Co.err(done));
           }
         });
         
