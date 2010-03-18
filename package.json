@@ -1,28 +1,38 @@
 {
   "name": "seed",
-  "version": "0.1.1000",
-  "description": "Core package for handling seeds.  The seed bootstrap used by node.js will actually look for the lib/index.js file here and load it",
+  "version": "0.1.1",
+  "description": "Flexible package manager for CommonJS",
+  "source": "git://github.com/seedjs/seed.git",
+  "site":   "http://www.seedjs.org",
+  "author": "Charles Jolley <charles@sproutit.com>",
+  "keywords": ["package manager", "package installer"],
   
-  // defines the locations for seed repositories on the local machine
+  // defines the locations for storing seeds on the local machine
   // override with a local.json if you need to do something different
-  "seed": {
-    "repositories":  {
-      "local": "~/.seeds",
-      "global": "/usr/local/seeds"
-    },
-        
-    "commands": {
-      "install": "seed:commands/install",
-      "remove":  "seed:commands/remove",
-      "list":    "seed:commands/list",
-      "help":    "seed:commands/help",
-      "update":  "seed:commands/update",
-      "freeze":  "seed:commands/freeze",
-      "remote":  "seed:commands/remote",
-      "push":    "seed:commands/push"
-    }
+  // Sources will be searched in the order they appear
+  "seed-sources":  {
+    "local": "~/.seeds",
+    "global": "/usr/local/seeds"
+  },
+
+  // Command plugins available to seed.  Name commands in your own packages
+  // to add them to seed.
+  "seed-commands": {
+    "install":  "seed:commands/install",
+    "remove":   "seed:commands/remove",
+    "list":     "seed:commands/list",
+    "help":     "seed:commands/help",
+    "update":   "seed:commands/update",
+    "freeze":   "seed:commands/freeze",
+    "unfreeze": "seed:commands/unfreeze",
+    "remote":   "seed:commands/remote",
+    "push":     "seed:commands/push"
   },
   
-  "seed-loader": { ".js": "seed:loader" }
+  // Loader plugins by file extension.  Name in your own packages to add them
+  // to seed
+  "seed-loader": { 
+    ".js": "seed:loader" 
+  }
   
 }
