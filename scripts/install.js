@@ -71,7 +71,7 @@ Co.chain(function(done) {
 
         Co.path.exists(dst, function(err, exists) {
           if (exists && !process.env.FORCE) {
-            Co.println('~/.seed/bin/'+filename+' already exists');
+            Co.println(dst+' already exists');
             return done(); // skip
           } else {
             Co.println(cmd);
@@ -87,5 +87,5 @@ Co.chain(function(done) {
   
 })(function(err) {
   if (err) Co.println("Failed: " + err);
-  else Co.println("Done");
+  else Co.println("Done.  If you haven't already, add "+SEED_BIN+' to your PATH to use seed commands');
 });

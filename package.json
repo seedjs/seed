@@ -39,6 +39,11 @@
   // to seed
   "seed-loader": { 
     ".js": "seed:loader" 
+  },
+  
+  "scripts": {
+    "install": "scripts/install.js",
+    "remove": "scripts/remove.js"
   }
     
 }
