@@ -87,5 +87,5 @@ Co.chain(function(done) {
   
 })(function(err) {
   if (err) Co.println("Failed: " + err);
-  else Co.println("Done.  If you haven't already, add "+SEED_BIN+' to your PATH to use seed commands');
+  else Co.println("Done.  If you haven't already, add "+SEED_REPO_BIN+' to your PATH to use seed commands');
 });
