@@ -1,0 +1,8 @@
+#!/usr/bin/env seed-node
+
+// TODO: Find nearest package and automatically register it so you can work
+// inside of a project
+
+var repl = require('default:repl');
+repl.start('seed> ');
+repl.scope.seed = require.seed;
