@@ -1,6 +1,6 @@
 {
   "name": "seed",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Flexible package manager for CommonJS",
   "site":   "http://www.seedjs.org",
   "author": "Charles Jolley <charles@sproutit.com>",
@@ -15,14 +15,14 @@
   // defines the locations for storing seeds on the local machine
   // override with a local.json if you need to do something different
   // Sources will be searched in the order they appear
-  "seed-sources":  {
+  "seed:sources":  {
     "local": "~/.seeds",
     "global": "/usr/local/seeds"
   },
 
   // Command plugins available to seed.  Name commands in your own packages
   // to add them to seed.
-  "seed-commands": {
+  "seed:commands": {
     "install":  "seed:commands/install",
     "remove":   "seed:commands/remove",
     "list":     "seed:commands/list",
@@ -37,7 +37,7 @@
   
   // Loader plugins by file extension.  Name in your own packages to add them
   // to seed
-  "seed-loader": { 
+  "seed:loader": { 
     ".js": "seed:loader" 
   },
   

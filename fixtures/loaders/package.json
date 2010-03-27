@@ -2,7 +2,7 @@
   "name": "loaders",
   "description": "for testing alternate loaders",
   
-  "seed-loader": {
+  "seed:loader": {
     ".coffeescript": "coffeescript"
   }
 }

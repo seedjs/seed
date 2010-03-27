@@ -24,7 +24,7 @@ Ct.setup(function(t, done) {
 
 Ct.test("should find all loader plugins", function(t, done) {
   
-  seed.collectMergedPluginInfo(loadersPackage, 'seed-loader', function(err, info) {
+  seed.collectMergedPluginInfo(loadersPackage, 'seed:loader', function(err, info) {
     t.ok(!err, 'should not have an error');
     t.deepEqual(Object.keys(info).sort(), ['.coffeescript', '.js'], 'info.keys');
     t.equal(info['.js'], 'seed:loader', 'info[.js]');
