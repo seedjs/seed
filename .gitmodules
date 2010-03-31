@@ -1,0 +1,3 @@
+[submodule "packages/tiki"]
+	path = packages/tiki
+	url = git://github.com/sproutit/tiki
