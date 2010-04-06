@@ -1,9 +1,8 @@
 # Seed
 ## Flexible Package Manager for Node
 
-Seed is a package manager for installing CommonJS-based packages that run on 
-the node.js JS engine.  You can use Seed to simplify distributed development
-of JavaScript-based code.  
+Seed is a package manager for installing CommonJS-based packages.  You can use 
+Seed to simplify distributed development of JavaScript-based code.  
 
 Since a lot of people use packages differently, Seed's goal is to remain very
 small and extensible through plugins.  You can easily add new JS loaders,
@@ -17,7 +16,9 @@ clients.
 
 ## Installing Seed
 
-First, you need node.js 0.1.3 or later installed on your system.  To install node.js see the [node.js download page](http://nodejs.org/#download).
+First, you need to install a JS command-line environment.  Be sure to edit the
+'seed' binary to change the '{CMD}' string at the top of the name of the 
+js command you want to invoke.
 
 Next, clone this repository to your local system and run the install script:
 
@@ -58,8 +59,8 @@ The following functionality has been implemented so far:
 	* 	use require('foo') to require modules from the current package
 	* 	use require('foo:bar') to require the bar module from the foo 
 		package
- 	* 	Traditional node.js requires such as require('./foo') and 
-		require(fs) still work as expected
+ 	* 	Traditional requires such as require('./foo') and require(fs) still 
+        work as expected
 *	Install/remove packages into local repository
 * 	Seed command line tool - including support for loading plugin commands
 

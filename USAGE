@@ -1,5 +1,5 @@
 
-h2. Using Seed in your node.js project
+h2. Using Seed in your JS project
 
 In your main.js file, require seed then require any other packages you might 
 need.
