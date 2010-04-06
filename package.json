@@ -27,7 +27,8 @@
     "unfreeze": "seed:commands/unfreeze",
     "remote":   "seed:commands/remote",
     "push":     "seed:commands/push",
-    "fork":     "seed:commands/fork" 
+    "fork":     "seed:commands/fork",
+    "config":   "seed:commands/config"
   },
   
   "seed:loader": { 
