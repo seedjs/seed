@@ -1,8 +1,28 @@
 #!/usr/bin/env node
 
-var seed = require('seed');
-var commands = seed.require('seed:commands');
+/*globals process */
 
-// first two args are 'node' and path to this binary
-var args = Array.prototype.slice.call(process.argv, 2);
-commands.invokeSync(args.shift(), args);
+var args = process.argv,
+    cwd  = process.cwd(),
+    src, path, commands;
+    
+var seed = require('seed');
+
+// If the second arg is a path then execute the path.  Otherwise try to 
+// process as a seed-command
+src = args[2];
+if (src && src.match(/[\/\\\.]/)) {
+  process.argv = args.slice(0,1).concat(args.slice(2)); // remove self
+  if (src.match(/^\.\.?\//)) {
+    path = seed.require('seed:private/core').path;
+    src = path.normalize(path.join(cwd,src));
+  }
+  seed.require(src);
+  
+// invoke as a seed command
+} else {
+  commands = seed.require('seed:commands');
+  args = Array.prototype.slice.call(args, 2);
+  commands.invokeSync(args.shift(), args);
+}
+

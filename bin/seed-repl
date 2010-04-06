@@ -1,4 +1,4 @@
-#!/usr/bin/env seed-node
+#!/usr/bin/env seed
 
 // TODO: Find nearest package and automatically register it so you can work
 // inside of a project
