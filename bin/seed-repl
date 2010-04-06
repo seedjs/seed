@@ -5,4 +5,5 @@
 
 var repl = require('default:repl');
 repl.start('seed> ');
-repl.scope.seed = require.seed;
+repl.scope.require = require;
+repl.scope.module  = module;

@@ -1,0 +1,7 @@
+{
+  "name": "bar",
+  "version": "3.2.1",
+  "dependencies": {
+    "foo": "1.1"
+  }
+}

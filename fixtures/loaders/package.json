@@ -1,8 +1,0 @@
-{
-  "name": "loaders",
-  "description": "for testing alternate loaders",
-  
-  "seed:loader": {
-    ".coffeescript": "coffeescript"
-  }
-}

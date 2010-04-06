@@ -1,5 +1,7 @@
 {
   "name": "basic",
   "version": "0.1.0",
-  "description": "basic example project"
+  "description": "basic example project",
+  
+  "seed:pass-through": "not modified"
 }
