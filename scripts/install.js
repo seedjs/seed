@@ -8,21 +8,21 @@
 /*globals __dirname  process */
 
 // Runs once to install seed. 
-var Co = require('../lib/private/co');
+var CORE = require('../lib/private/core');
 
-var SEED_DIR = Co.path.normalize(Co.path.join(__dirname, '..')),
-    NODE_LIBRARIES = Co.path.join(process.env.HOME, '.node_libraries'),
-    SEED_REPO_BIN = Co.path.join(process.env.HOME, '.seeds', 'bin');
+var SEED_DIR = CORE.path.normalize(CORE.path.join(__dirname, '..')),
+    NODE_LIBRARIES = CORE.path.join(process.env.HOME, '.node_libraries'),
+    SEED_REPO_BIN = CORE.path.join(process.env.HOME, '.seeds', 'bin');
 
 var O_RWX = 511; //0777
 
 // Step 1: Configure and build native extensions
-Co.chain(function(done) {
+CORE.iter.chain(function(done) {
   var cmd = 'cd '+SEED_DIR+'; node-waf configure build';
-  Co.println(cmd);
-  Co.exec(cmd, function(err, str) {
+  CORE.println(cmd);
+  CORE.fs.exec(cmd, function(err, str) {
     if (err) return done(err);
-    Co.println(str);
+    CORE.println(str);
     return done();
   });
 
@@ -30,10 +30,10 @@ Co.chain(function(done) {
 // link only  
 }, function(done) {
 
-  Co.fs.mkdir_p(NODE_LIBRARIES, O_RWX, function(err) {
+  CORE.fs.mkdir_p(NODE_LIBRARIES, O_RWX, function(err) {
     if (err) throw err;
 
-    var path = Co.path.join(NODE_LIBRARIES,'seed'), cmd;
+    var path = CORE.path.join(NODE_LIBRARIES,'seed'), cmd;
 
     var mode = (process.env.MODE || 'dev').toLowerCase();
     if (mode === 'dev') {
@@ -42,13 +42,13 @@ Co.chain(function(done) {
       cmd = 'cp -r ' + SEED_DIR + ' ' + path;
     }
 
-    Co.path.exists(path, function(err, exists) {
+    CORE.fs.exists(path, function(err, exists) {
       if (exists && !process.env.FORCE) {
-        Co.println('WARNING: ~/.node_libraries/seed already exists');
+        CORE.println('WARNING: ~/.node_libraries/seed already exists');
         return done();
         
       } else {
-        Co.exec(cmd, Co.err(done));
+        CORE.fs.exec(cmd, CORE.err(done));
       }
     });
 
@@ -56,26 +56,26 @@ Co.chain(function(done) {
 
 // Step 3: Copy seed/bin/* to .seeds/bin dir
 }, function(done) {
-  Co.fs.mkdir_p(SEED_REPO_BIN, O_RWX, function(err) {
+  CORE.fs.mkdir_p(SEED_REPO_BIN, O_RWX, function(err) {
     if (err) throw err;
     
-    var SRC_DIR = Co.path.join(SEED_DIR, 'bin');
-    Co.fs.readdir_p(SRC_DIR, function(err, bins) {
+    var SRC_DIR = CORE.path.join(SEED_DIR, 'bin');
+    CORE.fs.readdir_p(SRC_DIR, function(err, bins) {
       if (err) return done(err);
       if (!bins) bins = [];
       
-      Co.each(bins, function(filename, done) {
-        var src = Co.path.join(SRC_DIR, filename);
-        var dst = Co.path.join(SEED_REPO_BIN, filename);
+      CORE.iter.each(bins, function(filename, done) {
+        var src = CORE.path.join(SRC_DIR, filename);
+        var dst = CORE.path.join(SEED_REPO_BIN, filename);
         var cmd = 'ln -s '+src+' '+dst;
 
-        Co.path.exists(dst, function(err, exists) {
+        CORE.fs.exists(dst, function(err, exists) {
           if (exists && !process.env.FORCE) {
-            Co.println(dst+' already exists');
+            CORE.println(dst+' already exists');
             return done(); // skip
           } else {
-            Co.println(cmd);
-            Co.exec(cmd, Co.err(done));
+            CORE.println(cmd);
+            CORE.fs.exec(cmd, CORE.err(done));
           }
         });
         
@@ -86,6 +86,6 @@ Co.chain(function(done) {
 
   
 })(function(err) {
-  if (err) Co.println("Failed: " + err);
-  else Co.println("Done.  If you haven't already, add "+SEED_REPO_BIN+' to your PATH to use seed commands');
+  if (err) CORE.println("Failed: " + err);
+  else CORE.println("Done.  If you haven't already, add "+SEED_REPO_BIN+' to your PATH to use seed commands');
 });
