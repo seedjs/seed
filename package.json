@@ -1,6 +1,6 @@
 {
   "name": "seed",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Flexible package manager for CommonJS",
   "site":   "http://www.seedjs.org",
   "author": "Charles Jolley <charles@sproutit.com>",
