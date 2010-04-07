@@ -10,13 +10,13 @@ var Ct   = require('core_test:sync'),
 Ct.module('seed integration test');
 Ct.test('seed integration', function(t) {
   
-  var seed = require('../index');
+  var seed = require(help.path.join(help.SEED_ROOT, 'index'));
   t.ok(seed);
-  
+
   var tiki = seed.require('tiki');
   t.ok(tiki);
   
-  var test2 = seed.require('seed:core');
+  var test2 = seed.require('seed:private/core');
   t.ok(test2);
   
 });

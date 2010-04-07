@@ -5,7 +5,7 @@
 // ==========================================================================
 
 
-var core = require('core');
+var core = require('private/core');
 
 // exports some core API
 exports.FIXTURES_ROOT = core.path.join(core.SEED_ROOT, 'fixtures');
@@ -37,3 +37,5 @@ exports.unstage = function(stagingPath) {
 };
 
 exports.nativeRequire = core.nativeRequire;
+
+exports.SEED_ROOT = core.SEED_ROOT;
