@@ -1,7 +1,9 @@
 #!/usr/bin/env seed
 
-// TODO: Find nearest package and automatically register it so you can work
-// inside of a project
+// Find nearest package and automatically register it so you can work inside 
+// of a project
+var pkg = require.loader.openNearestPackage(process.cwd());
+if (pkg) require.loader.register(pkg.path);
 
 var repl = require('default:repl');
 repl.start('seed> ');
