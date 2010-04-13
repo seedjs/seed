@@ -6,6 +6,6 @@ var pkg = require.loader.openNearestPackage(process.cwd());
 if (pkg) require.loader.register(pkg.path);
 
 var repl = require('default:repl');
-repl.start('seed> ');
-repl.scope.require = require;
-repl.scope.module  = module;
+var inst = repl.start('seed> ');
+inst.scope.require = require;
+inst.scope.module  = module;
