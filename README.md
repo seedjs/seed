@@ -23,7 +23,9 @@ js command you want to invoke.
 Next, clone this repository to your local system and run the install script:
 
 	cd SEED_DIR
-	./scripts/setup.js
+	git submodule init
+	git submodule update
+	./scripts/install.js
 
 You should also add ~/.seeds/bin to your PATH if you want to run binaries 
 installed by seed from the command line.
